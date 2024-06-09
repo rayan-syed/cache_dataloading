@@ -1,0 +1,10 @@
+git clone
+module load python3/3.10.12
+virtualenv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+mkdir -p /scratch/$USER/data
+
+chmod +x ./scratch.sh
+
+
