@@ -9,5 +9,8 @@
 module load python3/3.10.12
 source .venv/bin/activate
 
+# Make data directory in scratch in case it doesnt exist
+mkdir -p /scratch/$USER/data
+
 # Run python file
 python scratch.py
