@@ -4,6 +4,7 @@
 #$ -P tianlabdl
 #$ -l h_rt=1:00:00
 #$ -j y
+#$ -l gpus=1
 
 # Load the required Python module and activate the virtual environment
 module load python3/3.10.12
