@@ -1,82 +1,70 @@
 import os
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader, Dataset
+import shutil
+import threading
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+from PIL import Image
 
-data_path = './data'
-scratch_path = '/scratch/$USER/data'
+# Change these paths accordingly 
+data_path = f'./data/dummy_data'   # need to test with ENGNAS
+scratch_path = f'/scratch/rsyed/data'
 
-# Custom Dataset class (optional, for illustration)
-class CustomMNISTDataset(Dataset):
-    def __init__(self, train=True):
-        self.data = datasets.MNIST(root=data_path, train=train, download=True, transform=transforms.ToTensor())
+class ScratchCache:
+    def __init__(self, files: list[str]):
+        self.files = files
+        # Make data directory in scratch in case it doesnt exist
+        if not os.path.exists(scratch_path):
+            os.makedirs(scratch_path)
+        self.in_scratch = set(os.listdir(scratch_path))
     
+    # Return data location in scratch if there, otherwise return original path but copy data over to scratch too
+    def validate_scratch(self, fname: str) -> str:
+        if fname in self.in_scratch:
+            return os.path.join(scratch_path, fname)
+        else:
+            self.copy_to_scratch(fname)
+            return os.path.join(data_path, fname)
+    
+    # Data copying should be done in background as to not make model wait
+    def copy_to_scratch(self, fname: str):
+        def copy():
+            src = os.path.join(data_path, fname)
+            dst = os.path.join(scratch_path, fname)
+            shutil.copy(src, dst)
+            self.in_scratch.add(fname)
+        threading.Thread(target=copy).start()
+
+    # Scratch will be attempted to be accessed every get_item call in dataset class
+    def get_path(self, idx):
+        fname = self.files[idx]
+        return self.validate_scratch(fname)
+
+class CustomImageDataset(Dataset):
+    def __init__(self, files: list[str], transform=None):
+        self.files = files
+        self.transform = transform
+        self.cache = ScratchCache(files)
+
     def __len__(self):
-        return len(self.data)
+        return len(self.files)
     
     def __getitem__(self, idx):
-        image, label = self.data[idx]
+        print(idx)
+        file_path = self.cache.get_path(idx)
+        image = Image.open(file_path)
+        if self.transform:
+            image = self.transform(image)
+        label = int(os.path.splitext(os.path.basename(file_path))[0].split('_')[1])  # Extract label from file name
         return image, label
 
-# Simple Neural Network
-class SimpleNN(nn.Module):
-    def __init__(self):
-        super(SimpleNN, self).__init__()
-        self.fc1 = nn.Linear(28*28, 128)
-        self.fc2 = nn.Linear(128, 64)
-        self.fc3 = nn.Linear(64, 10)
-    
-    def forward(self, x):
-        x = x.view(-1, 28*28)  # Flatten the image
-        x = torch.relu(self.fc1(x))
-        x = torch.relu(self.fc2(x))
-        x = self.fc3(x)
-        return x
+# Generate list of files
+files = os.listdir(data_path)
+transform = transforms.ToTensor()
+dataset = CustomImageDataset(files, transform=transform)
 
-# Hyperparameters
-batch_size = 64
-learning_rate = 0.001
-epochs = 5
+# Create DataLoader
+train_loader = DataLoader(dataset, batch_size=10, shuffle=True, num_workers=4) # Play around with num workers
 
-# DataLoader
-train_dataset = CustomMNISTDataset(train=True)
-test_dataset = CustomMNISTDataset(train=False)
-
-train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
-
-# Model, Loss, and Optimizer
-model = SimpleNN()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-# Training Loop
-for epoch in range(epochs):
-    model.train()
-    running_loss = 0.0
-    for images, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-        running_loss += loss.item()
-    
-    print(f"Epoch [{epoch+1}/{epochs}], Loss: {running_loss/len(train_loader):.4f}")
-
-# Evaluation Loop
-model.eval()
-correct = 0
-total = 0
-with torch.no_grad():
-    for images, labels in test_loader:
-        outputs = model(images)
-        _, predicted = torch.max(outputs.data, 1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum().item()
-
-print(f"Accuracy of the model on the test images: {100 * correct / total:.2f}%")
-
-
+# Example usage
+for images, labels in train_loader:
+    print(images.size(), labels)
