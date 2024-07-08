@@ -1,6 +1,9 @@
 import os
 import shutil
 import threading
+import torch
+import torch.nn as nn
+import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
@@ -49,7 +52,6 @@ class CustomImageDataset(Dataset):
         return len(self.files)
     
     def __getitem__(self, idx):
-        print(idx)
         file_path = self.cache.get_path(idx)
         image = Image.open(file_path)
         if self.transform:
@@ -59,12 +61,47 @@ class CustomImageDataset(Dataset):
 
 # Generate list of files
 files = os.listdir(data_path)
-transform = transforms.ToTensor()
+transform = transforms.Compose([
+    transforms.Resize((28, 28)),
+    transforms.ToTensor()
+])
 dataset = CustomImageDataset(files, transform=transform)
 
 # Create DataLoader
 train_loader = DataLoader(dataset, batch_size=10, shuffle=True, num_workers=4) # Play around with num workers
 
-# Example usage
-for images, labels in train_loader:
-    print(images.size(), labels)
+# Example Usage:
+# Define the CNN model
+class SimpleCNN(nn.Module):
+    def __init__(self):
+        super(SimpleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
+        self.fc1 = nn.Linear(16 * 28 * 28, 10)  # assuming image size is 28x28 and we have 10 classes
+
+    def forward(self, x):
+        x = self.conv1(x)
+        x = torch.relu(x)
+        x = x.view(x.size(0), -1)  # flatten the tensor
+        x = self.fc1(x)
+        return x
+
+# Initialize the model, loss function, and optimizer
+model = SimpleCNN()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+
+# Training loop
+num_epochs = 5
+for epoch in range(num_epochs):
+    model.train()
+    running_loss = 0.0
+    for images, labels in train_loader:
+        optimizer.zero_grad()
+        outputs = model(images)
+        loss = criterion(outputs, labels)
+        loss.backward()
+        optimizer.step()
+        running_loss += loss.item()
+    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss/len(train_loader)}")
+
+print("Training finished.")
