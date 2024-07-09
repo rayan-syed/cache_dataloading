@@ -9,7 +9,8 @@ from torchvision import transforms
 from PIL import Image
 
 # Change these paths accordingly 
-data_path = f'./data/dummy_data'   # need to test with ENGNAS
+# data_path = f'./data/dummy_data'   # Local data
+data_path = f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' # ENGNAS
 scratch_path = f'/scratch/rsyed/data'
 
 class ScratchCache:
