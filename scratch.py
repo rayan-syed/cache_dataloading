@@ -8,9 +8,11 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 
+local_data_path = f'./data/dummy_data'   # Local data
+ENGNAS_data_path = f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' # ENGNAS
+
 # Change these paths accordingly 
-# data_path = f'./data/dummy_data'   # Local data
-data_path = f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' # ENGNAS
+data_path = ENGNAS_data_path
 scratch_path = f'/scratch/rsyed/data'
 
 class ScratchCache:
