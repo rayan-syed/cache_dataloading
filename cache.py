@@ -67,9 +67,8 @@ transform = transforms.Compose([
 dataset = CustomImageDataset(files, transform=transform)
 
 # Create DataLoader
-batch = 32
-workers = 4         # DEFINE NUM_WORKERS HERE
-train_loader = DataLoader(dataset, batch_size=batch, shuffle=True, num_workers=workers) 
+workers = 4             # DEFINE NUM_WORKERS HERE
+train_loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=workers) 
 
 # Model With Customizable Layers
 class SimpleCNN(nn.Module):
@@ -107,7 +106,7 @@ for epoch in range(epochs):
     for images in train_loader:
         optimizer.zero_grad()
         outputs = model(images)
-        labels = torch.randint(0, 10, (batch,)) # Fake labels
+        labels = torch.randint(0, 10, (images.size(0),)) # Fake labels
         loss = criterion(outputs, labels)
         loss.backward()
         optimizer.step()
