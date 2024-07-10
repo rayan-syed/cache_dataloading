@@ -2,13 +2,14 @@
 
 # Specify the project and resource allocation
 #$ -P tianlabdl
-#$ -l h_rt=1:00:00
+#$ -l h_rt=48:00:00
 #$ -j y
 #$ -l gpus=1
+#$ -l gpu_c=3.5
 
 # Load the required Python module and activate the virtual environment
 module load python3/3.10.12
 source .venv/bin/activate
 
 # Run python file
-python scratch.py
+python cache.py
