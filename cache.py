@@ -1,17 +1,18 @@
 import os
 import shutil
-import torch
+import torch 
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
+import time
 
-local_data_path = f'./data/dummy_data'   # projectnb
-engnas_data_path = f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' # engnas
+projectnb = f'./data/dummy_data'   # projectnb
+engnas= f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' # engnas
 
 # Change these paths accordingly 
-data_path = local_data_path
+data_path = engnas
 cache_path = f'/scratch/rsyed/data'
 
 class DataCache:
@@ -99,7 +100,8 @@ criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=0.001)
 
 # Training loop
-epochs = 2
+epochs = 3
+start = time.time()  # Start timer
 for epoch in range(epochs):
     model.train()
     running_loss = 0.0
@@ -112,5 +114,7 @@ for epoch in range(epochs):
         optimizer.step()
         running_loss += loss.item()
     print(f"Epoch {epoch+1}/{epochs}")
+end = time.time()   # End timer
+time = end-start    # Calculate time
 
-print(f"Training with {layers} layers and {workers} workers finished.")
+print(f"Training with {layers} layers and {workers} workers finished in Elapsed time: {time:.2f} seconds")
