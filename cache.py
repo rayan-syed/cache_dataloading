@@ -147,7 +147,7 @@ print("Results completed.")
 print("Plotting results...")
 plt.figure(figsize=(12, 8))
 for config, res in results.items():
-    layers, time_taken = zip(*res)  # break up tuple into x,y
+    layers, time_taken = zip(*res)  # Break up tuple into x,y
     label = config[3]
     plt.plot(layers, time_taken, label=label)
 
