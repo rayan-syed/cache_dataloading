@@ -5,11 +5,14 @@
 #$ -l h_rt=48:00:00
 #$ -j y
 #$ -l gpus=1
-#$ -l gpu_c=6.0
+#$ -l gpu_c=8.6
 
 # Load the required Python module and activate the virtual environment
 module load python3/3.10.12
 source .venv/bin/activate
+
+# Cuda test
+python cuda_test.py
 
 # Run python file
 python cache.py
