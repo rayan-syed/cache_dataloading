@@ -132,16 +132,19 @@ configurations = [
 ]
 
 # Collect timing data
+print("Starting timing...")
 results = {config: [] for config in configurations}
 test_layers = [20, 30, 40, 50, 60]
 for layers in test_layers:
-    print(f"on layer: {layers}")
     for config in configurations:
-        use_cache, data_path, workers, _temp_ = config
+        use_cache, data_path, workers, name = config
+        print(f"Currently timing {layers} layer model with config: {name}...")
         time_taken = train_model(num_layers=layers, data_path=data_path, cache_path=scratch, use_cache=use_cache, num_workers=workers)
         results[config].append((layers, time_taken))
+print("Results completed.")
 
 # Plot results
+print("Plotting results...")
 plt.figure(figsize=(12, 8))
 for config, res in results.items():
     layers, time_taken = zip(*res)  # break up tuple into x,y
@@ -153,3 +156,4 @@ plt.ylabel('Time (seconds)')
 plt.title('Training Time vs Number of Layers')
 plt.legend()
 plt.savefig('cache_comparison.png')
+print("Comparison graph completed.")
