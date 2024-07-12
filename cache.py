@@ -7,7 +7,9 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
 import time
-import matplotlib.pyplot as plt    
+import datetime
+import matplotlib.pyplot as plt  
+import csv  
 
 class DataCache:
     def __init__(self, data_path, cache_path):
@@ -18,13 +20,10 @@ class DataCache:
         # Make data directory in cache in case it doesnt exist
         if not os.path.exists(self.cache_path):
             os.makedirs(self.cache_path)
-        
-        # Set of cache contents
-        self.in_cache = set(os.listdir(self.cache_path))
     
-    # Copy data to cache and then return cache path
-    def validate_cache(self, fname: str) -> str:
-        if fname not in self.in_cache:
+    # Copy data to cache if not already in and then return cache path
+    def validate_cache(self, fname: str):
+        if fname not in set(os.listdir(self.cache_path)):
             self.copy_to_cache(fname)
         return os.path.join(self.cache_path, fname)
     
@@ -33,7 +32,6 @@ class DataCache:
         src = os.path.join(self.data_path, fname)
         dst = os.path.join(self.cache_path, fname)
         shutil.copy(src, dst)
-        self.in_cache.add(fname)
 
     # Cache will be attempted to be accessed every get_item call in dataset class
     def get_path(self, idx):
@@ -41,7 +39,7 @@ class DataCache:
         return self.validate_cache(fname)
 
 class CustomImageDataset(Dataset):
-    def __init__(self, data_path, cache_path, transform=None, use_cache=True):
+    def __init__(self, data_path, cache_path, use_cache, transform=None):
         self.transform = transform
         self.data_path = data_path
         self.cache_path = cache_path
@@ -86,14 +84,19 @@ class SimpleCNN(nn.Module):
         x = self.fc1(x)
         return x
     
+# Function to clear the cache directory
+def clear_cache(cache_path):
+    if os.path.exists(cache_path):
+        shutil.rmtree(cache_path)
+
 # Function to train the model and measure time elapsed
 def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
     transform = transforms.Compose([
         transforms.Resize((28, 28)),
         transforms.ToTensor()
     ])
-    dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, transform=transform, use_cache=use_cache)
-    train_loader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=num_workers)
+    dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, transform=transform)
+    train_loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=num_workers)
     
     model = SimpleCNN(num_conv_layers=num_layers)
     criterion = nn.CrossEntropyLoss()
@@ -117,14 +120,14 @@ def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
     return end - start
 
 # Relevant paths
-projectnb = f'/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data'  
-engnas = f'/ad/eng/research/eng_research_cisl/rsyed/dummy_data' 
-scratch = f'/scratch/rsyed/data'
+projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data'  
+engnas = '/ad/eng/research/eng_research_cisl/rsyed/dummy_data' 
+scratch = '/scratch/rsyed/data'
 
 # Configurations to test
 configurations = [
-    (True, projectnb, 1, "Projectnb w cache"),
-    (True, engnas, 1, "ENGNAS w cache"),          
+    (True, projectnb, 1, "Projectnb w cache & 1 worker"),
+    (True, engnas, 1, "ENGNAS w cache & 1 worker"), 
     (False, projectnb, 1, "Projectnb w/o cache & 1 worker"),   
     (False, projectnb, 4, "Projectnb w/o cache & 4 workers"),   
     (False, engnas, 1, "ENGNAS w/o cache & 1 worker"),         
@@ -132,20 +135,37 @@ configurations = [
 ]
 
 # Collect timing data
-print("Starting timing...")
+print("Starting timing...\n")
 results = {config: [] for config in configurations}
 test_layers = [20, 30, 40, 50, 60]
 for layers in test_layers:
     for config in configurations:
         use_cache, data_path, workers, name = config
-        print(f"Currently timing {layers} layer model with config: {name}...")
+        print("Clearing cache to simulate new run...")
+        clear_cache(scratch)        # Clear the cache directory for accurate testing
+        print(f"Starting to train {layers} layer model with config: {name} @ {datetime.datetime.now()}...")
         time_taken = train_model(num_layers=layers, data_path=data_path, cache_path=scratch, use_cache=use_cache, num_workers=workers)
+        print(f"Training took: {time_taken}\n")
         results[config].append((layers, time_taken))
-print("Results completed.")
+print("Results completed.\n")
+
+res_name = "training_times"
+
+# Save results to a CSV file
+print("Saving to csv file...")
+csv_filename = f'{res_name}.csv'
+with open(csv_filename, mode='w', newline='') as file:
+    writer = csv.writer(file)
+    writer.writerow(['Configuration', 'Number of Layers', 'Time (seconds)'])
+    for config, res in results.items():
+        for layers, time_taken in res:
+            writer.writerow([config[3], layers, time_taken])
 
 # Plot results
 print("Plotting results...")
 plt.figure(figsize=(12, 8))
+
+# Linear
 for config, res in results.items():
     layers, time_taken = zip(*res)  # Break up tuple into x,y
     label = config[3]
@@ -155,5 +175,21 @@ plt.xlabel('Number of Layers')
 plt.ylabel('Time (seconds)')
 plt.title('Training Time vs Number of Layers')
 plt.legend()
-plt.savefig('cache_comparison.png')
-print("Comparison graph completed.")
+plt.savefig(f'{res_name}_linear.png')
+print("Linear graph plotted.")
+plt.clf()        # Clear the current figure
+
+# Logarithmic
+plt.figure(figsize=(12, 8))
+for config, res in results.items():
+    layers, time_taken = zip(*res)  # Break up tuple into x,y
+    label = config[3]
+    plt.plot(layers, time_taken, label=label)
+
+plt.yscale('log')
+plt.xlabel('Number of Layers')
+plt.ylabel('Time (seconds) [log scale]')
+plt.title('Training Time vs Number of Layers (Log Scale)')
+plt.legend()
+plt.savefig(f'{res_name}_log.png')
+print("Logarithmic graph plotted.")
