@@ -153,7 +153,7 @@ res_name = "training_times"
 
 # Save results to a CSV file
 print("Saving to csv file...")
-csv_filename = f'{res_name}.csv'
+csv_filename = f'results/{res_name}.csv'
 with open(csv_filename, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Configuration', 'Number of Layers', 'Time (seconds)'])
@@ -175,7 +175,7 @@ plt.xlabel('Number of Layers')
 plt.ylabel('Time (seconds)')
 plt.title('Training Time vs Number of Layers')
 plt.legend()
-plt.savefig(f'{res_name}_linear.png')
+plt.savefig(f'results/{res_name}_linear.png')
 print("Linear graph plotted.")
 plt.clf()        # Clear the current figure
 
@@ -191,5 +191,5 @@ plt.xlabel('Number of Layers')
 plt.ylabel('Time (seconds) [log scale]')
 plt.title('Training Time vs Number of Layers (Log Scale)')
 plt.legend()
-plt.savefig(f'{res_name}_log.png')
+plt.savefig(f'results/{res_name}_log.png')
 print("Logarithmic graph plotted.")
