@@ -120,7 +120,7 @@ def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
     return end - start
 
 # Relevant paths
-projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data'  
+projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data2'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed/dummy_data' 
 scratch = '/scratch/rsyed/data'
 
@@ -135,7 +135,7 @@ configurations = [
 ]
 
 # Collect timing data
-print("Starting timing...\n")
+print("\nStarting timing...\n")
 results = {config: [] for config in configurations}
 test_layers = [20, 30, 40, 50, 60]
 for layers in test_layers:
