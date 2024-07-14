@@ -96,7 +96,7 @@ def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
         transforms.ToTensor()
     ])
     dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, transform=transform)
-    train_loader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=num_workers)
+    train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=num_workers)
     
     model = SimpleCNN(num_conv_layers=num_layers)
     criterion = nn.CrossEntropyLoss()
@@ -120,7 +120,7 @@ def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
     return end - start
 
 # Relevant paths
-projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data2'  
+projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed/dummy_data' 
 scratch = '/scratch/rsyed/data'
 
@@ -149,11 +149,15 @@ for layers in test_layers:
         results[config].append((layers, time_taken))
 print("Results completed.\n")
 
-res_name = "training_times"
+res_name = "128x256x256"
+
+# Make results directory
+if not os.path.exists(f'results/{res_name}'):
+    os.makedirs(f'results/{res_name}')
 
 # Save results to a CSV file
 print("Saving to csv file...")
-csv_filename = f'results/{res_name}.csv'
+csv_filename = f'results/{res_name}/{res_name}.csv'
 with open(csv_filename, mode='w', newline='') as file:
     writer = csv.writer(file)
     writer.writerow(['Configuration', 'Number of Layers', 'Time (seconds)'])
@@ -175,7 +179,7 @@ plt.xlabel('Number of Layers')
 plt.ylabel('Time (seconds)')
 plt.title('Training Time vs Number of Layers')
 plt.legend()
-plt.savefig(f'results/{res_name}_linear.png')
+plt.savefig(f'results/{res_name}/{res_name}_linear.png')
 print("Linear graph plotted.")
 plt.clf()        # Clear the current figure
 
@@ -191,5 +195,5 @@ plt.xlabel('Number of Layers')
 plt.ylabel('Time (seconds) [log scale]')
 plt.title('Training Time vs Number of Layers (Log Scale)')
 plt.legend()
-plt.savefig(f'results/{res_name}_log.png')
+plt.savefig(f'results/{res_name}/{res_name}_log.png')
 print("Logarithmic graph plotted.")

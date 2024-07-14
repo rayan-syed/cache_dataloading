@@ -2,7 +2,7 @@
 
 # Specify the project and resource allocation
 #$ -P tianlabdl
-#$ -l h_rt=48:00:00
+#$ -l h_rt=200:00:00
 #$ -j y
 #$ -l gpus=1
 #$ -l gpu_c=8.6
