@@ -58,14 +58,17 @@ class CustomImageDataset(Dataset):
     def __getitem__(self, idx):
         if self.use_cache:
             file_path_main = self.cache.get_path(idx)
-            temp = self.ground_truth_cache.get_path(idx)
+            if self.ground_truth:
+                temp = self.ground_truth_cache.get_path(idx)
         else:
             file_path_main = os.path.join(self.data_path, self.files[idx])
-            temp = os.path.join(self.ground_truth, self.files[idx])
+            if self.ground_truth:
+                temp = os.path.join(self.ground_truth, self.files[idx])
         
         # Use tifffile to read the TIFF image
         image = tiff.imread(file_path_main)
-        temp = tiff.imread(temp)        # simulate reading ground truth but dont do anything with it
+        if self.ground_truth:
+            temp = tiff.imread(temp)        # simulate reading ground truth but dont do anything with it
         image = torch.tensor(image, dtype=torch.float32) / 255.0  # Normalize to [0, 1]
 
         if self.transform:
