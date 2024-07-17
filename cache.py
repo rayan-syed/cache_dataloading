@@ -25,6 +25,7 @@ class DataCache:
     # Copy data to cache if not already in and then return cache path
     def validate_cache(self, fname: str):
         if fname not in set(os.listdir(self.cache_path)):
+            print(f'copying {fname} from {self.data_path}  to {self.cache_path}')
             self.copy_to_cache(fname)
         return os.path.join(self.cache_path, fname)
     
@@ -47,6 +48,8 @@ class CustomImageDataset(Dataset):
         self.cache_path = cache_path
         self.use_cache = use_cache
         self.files = os.listdir(self.data_path)
+        if self.ground_truth:
+            self.ground_truth_files = os.listdir(self.ground_truth)
         if self.use_cache:
             self.cache = DataCache(self.data_path, self.cache_path)
             if self.ground_truth:
@@ -63,7 +66,7 @@ class CustomImageDataset(Dataset):
         else:
             file_path_main = os.path.join(self.data_path, self.files[idx])
             if self.ground_truth:
-                temp = os.path.join(self.ground_truth, self.files[idx])
+                temp = os.path.join(self.ground_truth, self.ground_truth_files[idx])
         
         # Use tifffile to read the TIFF image
         image = tiff.imread(file_path_main)
