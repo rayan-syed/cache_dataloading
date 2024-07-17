@@ -6,6 +6,7 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
+import tifffile as tiff
 import time
 import datetime
 import matplotlib.pyplot as plt  
@@ -39,37 +40,48 @@ class DataCache:
         return self.validate_cache(fname)
 
 class CustomImageDataset(Dataset):
-    def __init__(self, data_path, cache_path, use_cache, transform=None):
+    def __init__(self, data_path, cache_path, use_cache, ground_truth=None, transform=None):
         self.transform = transform
+        self.ground_truth = ground_truth
         self.data_path = data_path
         self.cache_path = cache_path
         self.use_cache = use_cache
         self.files = os.listdir(self.data_path)
         if self.use_cache:
             self.cache = DataCache(self.data_path, self.cache_path)
+            if self.ground_truth:
+                self.ground_truth_cache = DataCache(self.ground_truth, self.cache_path)
 
     def __len__(self):
         return len(self.files)
     
     def __getitem__(self, idx):
         if self.use_cache:
-            file_path = self.cache.get_path(idx)
+            file_path_main = self.cache.get_path(idx)
+            temp = self.ground_truth_cache.get_path(idx)
         else:
-            file_path = os.path.join(self.data_path, self.files[idx])
-        image = Image.open(file_path)
+            file_path_main = os.path.join(self.data_path, self.files[idx])
+            temp = os.path.join(self.ground_truth, self.files[idx])
+        
+        # Use tifffile to read the TIFF image
+        image = tiff.imread(file_path_main)
+        temp = tiff.imread(temp)        # simulate reading ground truth but dont do anything with it
+        image = torch.tensor(image, dtype=torch.float32) / 255.0  # Normalize to [0, 1]
+
         if self.transform:
             image = self.transform(image)
+        
         return image
 
 # Model With Customizable Layers
 class SimpleCNN(nn.Module):
-    def __init__(self, num_conv_layers=1):
+    def __init__(self, num_conv_layers=1, input_channels=3):
         super(SimpleCNN, self).__init__()
         self.layers = num_conv_layers
         
         # Define the convolutional layers dynamically
         self.conv_layers = nn.ModuleList([
-            nn.Conv2d(in_channels=3 if i == 0 else 16, out_channels=16, kernel_size=3, stride=1, padding=1)
+            nn.Conv2d(in_channels=input_channels if i == 0 else 16, out_channels=16, kernel_size=3, stride=1, padding=1)
             for i in range(num_conv_layers)
         ])
         
@@ -90,15 +102,14 @@ def clear_cache(cache_path):
         shutil.rmtree(cache_path)
 
 # Function to train the model and measure time elapsed
-def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
+def train_model(num_layers, input_channels, data_path, cache_path, use_cache, num_workers, ground_truth_path=None):
     transform = transforms.Compose([
-        transforms.Resize((28, 28)),
-        transforms.ToTensor()
+        transforms.Resize((28, 28))
     ])
-    dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, transform=transform)
+    dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, ground_truth=ground_truth_path, transform=transform)
     train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=num_workers)
     
-    model = SimpleCNN(num_conv_layers=num_layers)
+    model = SimpleCNN(num_conv_layers=num_layers, input_channels=input_channels)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
@@ -120,8 +131,10 @@ def train_model(num_layers, data_path, cache_path, use_cache, num_workers):
     return end - start
 
 # Relevant paths
-projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/dummy_data'  
-engnas = '/ad/eng/research/eng_research_cisl/rsyed/dummy_data' 
+dataset = '33x224x224'
+ground_truth = '24x224x224'
+projectnb = f'/projectnb/tianlabdl/rsyed/cache_dataloading/data'  
+engnas = f'/ad/eng/research/eng_research_cisl/rsyed' 
 scratch = '/scratch/rsyed/data'
 
 # Configurations to test
@@ -136,20 +149,24 @@ configurations = [
 
 # Collect timing data
 print("\nStarting timing...\n")
+in_channels = 33            # Specify input channels for model
 results = {config: [] for config in configurations}
 test_layers = [20, 30, 40, 50, 60]
 for layers in test_layers:
     for config in configurations:
-        use_cache, data_path, workers, name = config
+        use_cache, path, workers, name = config
+        data_path = f'{path}/{dataset}'
+        ground_truth_path = f'{path}/{ground_truth}'
         print("Clearing cache to simulate new run...")
         clear_cache(scratch)        # Clear the cache directory for accurate testing
         print(f"Starting to train {layers} layer model with config: {name} @ {datetime.datetime.now()}...")
-        time_taken = train_model(num_layers=layers, data_path=data_path, cache_path=scratch, use_cache=use_cache, num_workers=workers)
+        # Remove ground_truth_path variable if timing w/o ground truth
+        time_taken = train_model(num_layers=layers, input_channels=in_channels, data_path=data_path, cache_path=scratch, use_cache=use_cache, num_workers=workers, ground_truth_path=ground_truth_path)
         print(f"Training took: {time_taken}\n")
         results[config].append((layers, time_taken))
 print("Results completed.\n")
 
-res_name = "128x256x256"
+res_name = "ground_truth"
 
 # Make results directory
 if not os.path.exists(f'results/{res_name}'):
