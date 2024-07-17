@@ -25,7 +25,6 @@ class DataCache:
     # Copy data to cache if not already in and then return cache path
     def validate_cache(self, fname: str):
         if fname not in set(os.listdir(self.cache_path)):
-            print(f'copying {fname} from {self.data_path}  to {self.cache_path}')
             self.copy_to_cache(fname)
         return os.path.join(self.cache_path, fname)
     
