@@ -3,15 +3,15 @@ import numpy as np
 from tifffile import imsave
 
 size = 224
-channels = 24
+channels = 33
+images = 500
+name = 'image'
 
-data_path = f'./{channels}x{size}x{size}'
+data_path = f'./{images},{channels}x{size}x{size}'
 os.makedirs(data_path, exist_ok=True)
 
-name = 'ground_truth'
-
 # Generate 5000 random TIFF images
-for i in range(5000):
+for i in range(images):
     # Generate random pixel values for each channel
     random_pixels = np.random.randint(0, 256, (channels, size, size), dtype=np.uint8)
     # Save new image as TIFF
