@@ -17,6 +17,7 @@ class DataCache:
         self.data_path = data_path
         self.cache_path = cache_path
         self.files = os.listdir(self.data_path)
+        self.in_cache = set()
 
         # Make data directory in cache in case it doesnt exist
         if not os.path.exists(self.cache_path):
@@ -24,7 +25,7 @@ class DataCache:
     
     # Copy data to cache if not already in and then return cache path
     def validate_cache(self, fname: str):
-        if fname not in set(os.listdir(self.cache_path)):
+        if fname not in self.in_cache:
             self.copy_to_cache(fname)
         return os.path.join(self.cache_path, fname)
     
@@ -33,6 +34,7 @@ class DataCache:
         src = os.path.join(self.data_path, fname)
         dst = os.path.join(self.cache_path, fname)
         shutil.copy(src, dst)
+        self.in_cache.add(fname)
 
     # Cache will be attempted to be accessed every get_item call in dataset class
     def get_path(self, idx):
@@ -112,7 +114,7 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
         transforms.Resize((28, 28))
     ])
     dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, ground_truth=ground_truth_path, transform=transform)
-    train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=num_workers)
+    train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=num_workers, persistent_workers=True)
     
     model = SimpleCNN(num_conv_layers=num_layers, input_channels=input_channels)
     criterion = nn.CrossEntropyLoss()
@@ -136,9 +138,9 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
     return end - start
 
 # Relevant paths
-dataset = '500,33x224x224'
-ground_truth = '500,24x224x224'
-projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data'  
+dataset = '5000,33x224x224'
+ground_truth = '5000,24x224x224'
+projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed' 
 scratch = '/scratch/rsyed/data'
 
@@ -171,7 +173,7 @@ for layers in test_layers:
         results[config].append((layers, time_taken))
 print("Results completed.\n")
 
-res_name = "ground_truth_500_images"
+res_name = "new_ground_truth_5000_images"
 
 # Make results directory
 if not os.path.exists(f'results/{res_name}'):
