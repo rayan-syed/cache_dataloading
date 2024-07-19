@@ -137,12 +137,13 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
     end = time.time()       # End timer
     return end - start
 
-# Relevant paths
+# Relevant paths/variables
+res_name = "new_ground_truth_5000_images"
 dataset = '5000,33x224x224'
 ground_truth = '5000,24x224x224'
 projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed' 
-scratch = '/scratch/rsyed/data'
+scratch = f'/scratch/rsyed/data/{res_name}'
 
 # Configurations to test
 configurations = [
@@ -172,8 +173,6 @@ for layers in test_layers:
         print(f"Training took: {time_taken}\n")
         results[config].append((layers, time_taken))
 print("Results completed.\n")
-
-res_name = "new_ground_truth_5000_images"
 
 # Make results directory
 if not os.path.exists(f'results/{res_name}'):
