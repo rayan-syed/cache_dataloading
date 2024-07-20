@@ -138,9 +138,10 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
     return end - start
 
 # Relevant paths/variables
-res_name = "new_ground_truth_5000_images"
-dataset = '5000,33x224x224'
-ground_truth = '5000,24x224x224'
+res_name = "new_ground_truth_500_images"
+
+dataset = '500,33x224x224'
+ground_truth = '500,24x224x224'
 projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed' 
 scratch = f'/scratch/rsyed/data/{res_name}'
