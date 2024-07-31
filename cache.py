@@ -20,8 +20,7 @@ class DataCache:
         self.in_cache = set()
 
         # Make data directory in cache in case it doesnt exist
-        if not os.path.exists(self.cache_path):
-            os.makedirs(self.cache_path)
+        os.makedirs(self.cache_path, exist_ok=True)
     
     # Copy data to cache if not already in and then return cache path
     def validate_cache(self, fname: str):
@@ -114,7 +113,7 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
         transforms.Resize((28, 28))
     ])
     dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, ground_truth=ground_truth_path, transform=transform)
-    train_loader = DataLoader(dataset, batch_size=128, shuffle=True, num_workers=num_workers, persistent_workers=True)
+    train_loader = DataLoader(dataset, batch_size=128, prefetch_factor=4, shuffle=True, num_workers=num_workers, persistent_workers=True)
     
     model = SimpleCNN(num_conv_layers=num_layers, input_channels=input_channels)
     criterion = nn.CrossEntropyLoss()
