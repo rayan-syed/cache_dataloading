@@ -109,13 +109,14 @@ def clear_cache(cache_path):
 
 # Function to train the model and measure time elapsed
 def train_model(num_layers, input_channels, data_path, cache_path, use_cache, num_workers, ground_truth_path=None):
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     transform = transforms.Compose([
         transforms.Resize((28, 28))
     ])
     dataset = CustomImageDataset(data_path=data_path, cache_path=cache_path, use_cache=use_cache, ground_truth=ground_truth_path, transform=transform)
     train_loader = DataLoader(dataset, batch_size=128, prefetch_factor=4, shuffle=True, num_workers=num_workers, persistent_workers=True)
     
-    model = SimpleCNN(num_conv_layers=num_layers, input_channels=input_channels)
+    model = SimpleCNN(num_conv_layers=num_layers, input_channels=input_channels).to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
     
@@ -126,9 +127,10 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
         model.train()
         running_loss = 0.0
         for images in train_loader:
+            images = images.to(device)
             optimizer.zero_grad()
             outputs = model(images) 
-            labels = torch.randint(0, 10, (images.size(0),))     # Fake Labels
+            labels = torch.randint(0, 10, (images.size(0),)).to(device)     # Fake Labels
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -137,10 +139,10 @@ def train_model(num_layers, input_channels, data_path, cache_path, use_cache, nu
     return end - start
 
 # Relevant paths/variables
-res_name = "new_ground_truth_500_images"
+res_name = "5000_images"
 
-dataset = '500,33x224x224'
-ground_truth = '500,24x224x224'
+dataset = '5000,33x224x224'
+ground_truth = '5000,24x224x224'
 projectnb = '/projectnb/tianlabdl/rsyed/cache_dataloading/data/'  
 engnas = '/ad/eng/research/eng_research_cisl/rsyed' 
 scratch = f'/scratch/rsyed/data/{res_name}'
