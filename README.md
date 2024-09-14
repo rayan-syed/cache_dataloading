@@ -42,7 +42,7 @@ class DataCache:
         fname = self.files[idx]
         return self.validate_cache(fname)
 ```
-### Initialization.
+### Initialization
 Here is a relevant snippet from the `__init__` function of the dataset class for the model:
 ```
 self.cache = DataCache(self.data_path, self.cache_path)
