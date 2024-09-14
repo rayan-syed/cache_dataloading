@@ -78,7 +78,7 @@ When the cache was integrated into the model, the training times for the local l
 
 When the same tests were performed with 5000 image datasets of the same size instead, the results were consistent, as seen here:
 ![image](https://github.com/user-attachments/assets/1cd93fb6-2223-4ff1-825b-40bbc34a1b52)
-This logarithmic graph shows that the relative difference between all the different events' training times are about the same.
+This logarithmic graph shows that the relative difference between all the different events' training times is about the same.
 
 ## Conclusion
 From these results, it is safe to conclude that using the DataCache class is worth it in almost all scenarios. For local data, a slight improvement can be seen, while for external data, significant improvement can be seen. Multithreading is still clearly more efficient, but scratch cache overcomes some of its downsides such as having a lower priority job, using high amounts of memory/large overhead, and potentially causing CPU overusage (leading to job being reaped/killed). 
