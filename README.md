@@ -42,14 +42,14 @@ class DataCache:
         fname = self.files[idx]
         return self.validate_cache(fname)
 ```
-# Initialization.
+### Initialization.
 Here is a relevant snippet from the `__init__` function of the dataset class for the model:
 ```
 self.cache = DataCache(self.data_path, self.cache_path)
 ```
 The way it works is simple. Upon initialization, the original data location (data path) and training data location (cache path) are required, so they should also be input arguments for the overlying dataset class. The `files` list is simply just a list of all the items in the orignial data. The `in_cache` set is created in order to keep track of the current items within the cache path. 
 
-# Usage
+### Usage
 Here a relevant snippet from the `__getitem__` function of the dataset class for the model:
 ```
 file_path_main = self.cache.get_path(idx)
