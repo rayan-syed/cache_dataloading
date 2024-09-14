@@ -66,5 +66,23 @@ train_loader = DataLoader(dataset, batch_size=128, prefetch_factor=4, shuffle=Tr
 The lack of not specifying this can lead to the unintended behavior of every item being copied every epoch, which is more inefficient than the model before implementing this cache_dataloading feature.
 
 ## Results
-Near the bottom of `cache.py` many lines of code to run and plot the training time results of using this cache in different scenarios can be seen. The results will be explained in detail here.
-![image](https://github.com/user-attachments/assets/d600e945-361c-45a2-ae42-1413b86eefe4)
+Near the bottom of `cache.py` many lines of code to run and plot the training time results of using this cache in different scenarios can be seen. The results will be explained in detail here. Note that the raw data can be seen in the `results/` directory in this repository in the form of .csv files.
+![image](https://github.com/user-attachments/assets/4337ca1d-e7e2-493f-9610-d501882df578)
+Above is a logarithmic graph showing the training times in seconds with a data size of 500 33x224x224 images and ground truth of 500 24x224x224 images. 
+
+# Without the Data Cache
+`Projectnb` in the SCC is the 'local' data storage location. When the data is stored in this local location, the training time seems to be about average as seen by the green line. `ENGNAS` is the 'external' data storage location in this case. When the data is stored in ENGNAS, the training time is obviously much slower, as seen by the purple line. The multithreading counterparts of both of these scenarios (num_workers=4) are obviously significantly faster as seen by the red and brown lines respectively. 
+
+# With the Data Cache
+When the cache was integrated into the model, the training times for the local location was slightly faster even though not significantly, as seen by the blue line. On the other hand, the external storage saw a massive improvement in training times, as seen by the orange line. The performance of training with data at an external location with the use of this cache_dataloading feature allowed for the training times to be very comparable to that of training with data from a local location. This is a significant improvement and very important find. 
+
+When the same tests were performed with 5000 image datasets of the same size instead, the results were consistent, as seen here:
+![image](https://github.com/user-attachments/assets/1cd93fb6-2223-4ff1-825b-40bbc34a1b52)
+This logarithmic graph shows that the relative difference between all the different events' training times are about the same.
+
+# Conclusion
+From these results, it is safe to conclude that using the DataCache class is worth it in almost all scenarios. For local data, a slight improvement can be seen, while for external data, significant improvement can be seen. Multithreading is still clearly more efficient, but scratch cache overcomes some of its downsides such as having a lower priority job, using high amounts of memory/large overhead, and potentially causing CPU overusage (leading to job being reaped/killed). 
+
+However, there is possibility for a solution even better than this. Currently, this cache_dataloading feature cannot be used with multiple workers (multithreading) since there is potential for corruption, as the model might access data not yet done copying or the same item might end up being copied multiple times. By making the DataCache class thread safe, this downside can be overcome, and multithreading can be combined with this project in order to act as the most optimal solution for data loading. Based on the results from the graph, it is clear that multiple workers with the cache will cause the massive time saves of both methods to combine, leading to the best case training times. 
+
+Hopefully, this class can be seamlessly integrated into your models and help with optimizing training. If you have any further questions or spot any errors, please contact at me at rsyed@bu.edu.
