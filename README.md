@@ -85,4 +85,4 @@ From these results, it is safe to conclude that using the DataCache class is wor
 
 However, there is possibility for a solution even better than this. Currently, this cache_dataloading feature cannot be used with multiple workers (multithreading) since there is potential for corruption, as the model might access data not yet done copying or the same item might end up being copied multiple times. By making the DataCache class thread safe, this downside can be overcome, and multithreading can be combined with this project in order to act as the most optimal solution for data loading. Based on the results from the graph, it is clear that multiple workers with the cache will cause the massive time saves of both methods to combine, leading to the best case training times. 
 
-Hopefully, this class can be seamlessly integrated into your models and help with optimizing training. If you have any further questions or spot any errors, please contact at me at rsyed@bu.edu.
+Hopefully this class can be seamlessly integrated into your models and help with optimizing training. If you have any further questions or spot any errors, please contact at me at rsyed@bu.edu.
